@@ -5,7 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), BackgroundTaskHelper.IBackgroundListener {
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,5 +20,20 @@ class MainActivity : AppCompatActivity() {
         button_start_job.setOnClickListener {
             BackgroundTaskHelper.startJob(this)
         }
+
+        BackgroundTaskHelper.addListener(this)
+    }
+
+    override fun onDestroy() {
+        BackgroundTaskHelper.removeListener(this)
+        super.onDestroy()
+    }
+
+    override fun onTaskCompleted() {
+        /* no op */
+    }
+
+    override fun onTaskError(e: Throwable) {
+        /* no op */
     }
 }

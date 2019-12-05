@@ -1,6 +1,5 @@
 package com.example.rxbackground
 
-import android.app.Application
 import android.content.Context
 import android.widget.Toast
 import io.reactivex.Completable
@@ -14,8 +13,13 @@ object BackgroundTaskHelper {
     private var isCompleted: Boolean = false
     private var error: Exception? = null
 
+    private var listeners = mutableListOf<IBackgroundListener>()
+
     fun startJob(context: Context) {
         if (completable == null) {
+            isCompleted = false
+            error = null
+
             completable = Completable.create { emitter ->
                 Thread.sleep(10000)
                 emitter.onComplete()
@@ -27,12 +31,17 @@ object BackgroundTaskHelper {
                 .subscribe(object: DisposableCompletableObserver() {
                     override fun onComplete() {
                         isCompleted = true
-                        completable = null
+                        if (listeners.isNotEmpty()) {
+                            listeners.forEach { it.onTaskCompleted() }
+                        }
                     }
 
                     override fun onError(e: Throwable) {
                         isCompleted = true
                         error = Exception(e.message)
+                        if (listeners.isNotEmpty()) {
+                            listeners.forEach { it.onTaskError(e) }
+                        }
                     }
                 })
 
@@ -42,7 +51,16 @@ object BackgroundTaskHelper {
         }
     }
 
-    fun isCompleted() = isCompleted
+    fun addListener(listener: IBackgroundListener) {
+        listeners.add(listener)
+    }
 
-    fun getError() = error
+    fun removeListener(listener: IBackgroundListener) {
+        listeners.remove(listener)
+    }
+
+    interface IBackgroundListener {
+        fun onTaskCompleted()
+        fun onTaskError(e: Throwable)
+    }
 }

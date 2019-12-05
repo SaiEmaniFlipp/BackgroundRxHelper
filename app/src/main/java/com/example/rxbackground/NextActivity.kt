@@ -4,28 +4,26 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_next.*
 
-class NextActivity : AppCompatActivity() {
-
+class NextActivity : AppCompatActivity(), BackgroundTaskHelper.IBackgroundListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_next)
 
-        button_refresh.setOnClickListener {
-            fetchJobStatus()
-        }
+        text_view_status.text = "Processing"
 
-        fetchJobStatus()
+        BackgroundTaskHelper.addListener(this)
     }
 
-    private fun fetchJobStatus() {
-        if (BackgroundTaskHelper.isCompleted()) {
-            if (BackgroundTaskHelper.getError() != null) {
-                text_view_status.text = "Error"
-            } else {
-                text_view_status.text = "Completed"
-            }
-        } else {
-            text_view_status.text = "Processing"
-        }
+    override fun onDestroy() {
+        BackgroundTaskHelper.removeListener(this)
+        super.onDestroy()
+    }
+
+    override fun onTaskCompleted() {
+        text_view_status.text = "Completed"
+    }
+
+    override fun onTaskError(e: Throwable) {
+        text_view_status.text = "Error"
     }
 }
